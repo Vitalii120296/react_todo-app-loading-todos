@@ -29,23 +29,27 @@ export const App: React.FC = () => {
   useEffect(() => {
     getTodos()
       .then(response => {
-        let filteredTodos = response;
-
-        if (filter === 'active') {
-          filteredTodos = response.filter(todo => todo.completed === false);
-        }
-
-        if (filter === 'completed') {
-          filteredTodos = response.filter(todo => todo.completed === true);
-        }
-
-        setTodos(filteredTodos);
+        setTodos(response);
         setErrorMessage('');
       })
       .catch(() => {
         handleErrorMessage('Unable to load todos');
       });
-  }, [filter]);
+  }, []);
+
+  function getFilterTodos(todoForFilter: Todo[], forFilter: string): Todo[] {
+    if (forFilter === 'active') {
+      return todoForFilter.filter(todo => todo.completed === false);
+    }
+
+    if (forFilter === 'completed') {
+      return todoForFilter.filter(todo => todo.completed === true);
+    }
+
+    return todoForFilter;
+  }
+
+  const filteredTodos = getFilterTodos(todos, filter);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -148,7 +152,7 @@ export const App: React.FC = () => {
         </header>
 
         <section className="todoapp__main" data-cy="TodoList">
-          {todos.map(todo => (
+          {filteredTodos.map(todo => (
             <div
               key={todo.id}
               data-cy="Todo"

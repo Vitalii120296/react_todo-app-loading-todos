@@ -46,7 +46,7 @@ export const App: React.FC = () => {
       });
   }, []);
 
-  function getFilterTodos(todoForFilter: Todo[], enumFilter: number): Todo[] {
+  function getFilterTodos(todoForFilter: Todo[], enumFilter: string): Todo[] {
     if (enumFilter === Filter.active) {
       return todoForFilter.filter(todo => !todo.completed);
     }
@@ -103,10 +103,10 @@ export const App: React.FC = () => {
     deleteTodo(id)
       .then(() => {
         setErrorMessage('');
-        setTodos(currentTodo => currentTodo.filter(todo => todo.id !== id));
+        setTodos(currentTodos => currentTodos.filter(todo => todo.id !== id));
       })
       .catch(e => {
-        setTodos(prevTodos => [...prevTodos]);
+        setTodos(currentTodos => currentTodos);
         handleErrorMessage('Unable to delete a todo');
         throw e;
       })
@@ -122,17 +122,30 @@ export const App: React.FC = () => {
   const handleClearCompleted = () => {
     const completedTodos = todos.filter(todo => todo.completed);
 
-    completedTodos.forEach(todo =>
-      deleteTodo(todo.id)
-        .then(() => {
-          setTodos(currentTodos => currentTodos.filter(t => !t.completed));
-        })
-        .catch(e => {
+    Promise.allSettled(
+      completedTodos.map(todo =>
+        deleteTodo(todo.id).catch(() => {
           handleErrorMessage('Unable to delete a todo');
-          setTodos(prevTodos => [...prevTodos]);
-          throw e;
+
+          return Promise.reject({ id: todo.id }); // Передаємо id в reason
         }),
-    );
+      ),
+    )
+      .then(response => {
+        const failedIds = response
+          .filter(r => r.status === 'rejected') // Фільтруємо тільки відхилені проміси
+          .map(r => (r.reason as { id: number }).id); // Дістаємо id з reason
+
+        setTodos(currentTodos =>
+          currentTodos.filter(
+            todo => !todo.completed || failedIds.includes(todo.id),
+          ),
+        );
+      })
+      .catch(e => {
+        handleErrorMessage('Unable to delete a todo');
+        throw e;
+      });
 
     inputRef.current?.focus();
   };
@@ -154,7 +167,7 @@ export const App: React.FC = () => {
         handleErrorMessage('Unable to update a todo');
       })
       .finally(() => {
-        setLoader(null);
+        setLoader(0);
       });
   };
 

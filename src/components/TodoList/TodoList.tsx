@@ -1,7 +1,7 @@
 import React from 'react';
 import { Todo } from '../../types/Todo';
-import classNames from 'classnames';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { TodoItem } from '../TodoItem/TodoItem';
 
 type Props = {
   tempTodo: Todo | null;
@@ -25,56 +25,13 @@ export const TodoList: React.FC<Props> = ({
         {(!tempTodo ? filteredTodos : [...filteredTodos, tempTodo]).map(
           todo => (
             <CSSTransition key={todo.id} timeout={300} classNames="item">
-              <div
-                key={todo.id}
-                data-cy="Todo"
-                className={classNames(
-                  'todo',
-                  todo.completed ? 'completed' : 'item-enter-done',
-                )}
-              >
-                <label
-                  className="todo__status-label"
-                  aria-label="Toggle todo status"
-                >
-                  <input
-                    data-cy="TodoStatus"
-                    type="checkbox"
-                    className="todo__status"
-                    checked={todo?.completed}
-                    onChange={() => {
-                      handleUpdate(todo.id, todo.completed);
-                    }}
-                  />
-                </label>
-                <span data-cy="TodoTitle" className="todo__title">
-                  {todo.title}
-                </span>
-                <button
-                  type="button"
-                  className="todo__remove"
-                  data-cy="TodoDelete"
-                  onClick={() => {
-                    handleDelete(todo.id);
-                  }}
-                  disabled={isSubmiting}
-                >
-                  ×
-                </button>
-                <div
-                  key={todo.id}
-                  data-cy="TodoLoader"
-                  className={classNames(
-                    'modal',
-                    'overlay',
-                    loader === todo.id && 'is-active',
-                  )}
-                >
-                  <div className="modal-background has-background-white-ter" />
-                  <div className="loader" />
-                  {todo.title}
-                </div>
-              </div>
+              <TodoItem
+                todo={todo}
+                handleUpdate={handleUpdate}
+                handleDelete={handleDelete}
+                isSubmiting={isSubmiting}
+                loader={loader}
+              />
             </CSSTransition>
           ),
         )}
